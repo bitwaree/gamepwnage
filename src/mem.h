@@ -8,20 +8,22 @@
 */
 
 #pragma once
-#include <stdio.h>
-#include <stdlib.h>
+#include "config.h"
 #include <stdint.h>
 #include <stdbool.h>
-#include <string.h>
-#include <sys/mman.h>
+
+
+#ifndef CONFIG_H_
+//config.h not included
+//default configs
+
+//TODO: add default configs
+#endif
 
 typedef bool BOOL;
 #define TRUE true;
 #define FALSE false;
-
 typedef uint8_t BYTE;
-
-#define NO_EXPORT_SYM           //Comment if you want api symbols to be exported
 
 
 #ifdef NO_EXPORT_SYM

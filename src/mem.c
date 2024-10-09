@@ -7,11 +7,18 @@
  https://github.com/bitwaree/gamepwnage
 */
 
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include "mem.h"
 
 BOOL __attribute__((visibility(VISIBILITY_FLAG))) WritetoMemory(void *Dest, void *Src, size_t Size, int old_protection)
@@ -77,25 +84,66 @@ BOOL __attribute__((visibility(VISIBILITY_FLAG))) ReadfromMemory(void *Dest, voi
 
 BOOL __attribute__((visibility(VISIBILITY_FLAG))) PatchNop(void *Address, size_t len)
 {
-    int old_protection;
-    old_protection = mprotect(Address, len, 0);
-    if (old_protection == -1)
+//Check architecture and set-up as required
+#if defined(__x86_64__) || defined(__amd64__)
+    // Code specific to x86_64
+    static const unsigned char nopBytes[1] = {0x90};
+    static const size_t nopBytes_len = 1;
+#elif defined(__i386__) || defined(__i686__) || defined (__x86__)
+    // Code specific to x86 (32-bit)
+    static const unsigned char nopBytes[1] = {0x90};
+    static const size_t nopBytes_len = 1;
+#elif defined(__aarch64__)
+    // Code specific to AArch64
+    static const unsigned char nopBytes[4] = {0x1f, 0x20, 0x03, 0xd5};
+    static const size_t nopBytes_len = 4;
+#elif defined(__arm__)
+    // Code specific to 32-bit ARM
+    static const unsigned char nopBytes[4] = {0x00, 0x00, 0xa0, 0xe1};
+    static const size_t nopBytes_len = 4;
+#elif defined(__mips__)
+    // Code specific to MIPS
+    static const unsigned char nopBytes[4] = {0x00, 0x00, 0x00, 0x00};
+    static const size_t nopBytes_len = 4;
+#else
+    #error "Unsupported architecture."
+#endif
+
+    if((len % nopBytes_len) != 0)
     {
-        perror("Error getting old memory protection");
-        return 0;
+        //If invalid length
+        fprintf(stderr, "[!] %s@%s: Invalid nop length specified at address 0x%lX! (must be a multiple of %d)", 
+            "PatchNop", "gamepwnage", (uintptr_t)Address, (int)nopBytes_len);
+        return FALSE;
     }
-    // Change the protection of the region
-    if (mprotect(Address, len, PROT_READ | PROT_WRITE | PROT_EXEC) == -1)
+    
+   // Get the system page size
+    size_t page_size = sysconf(_SC_PAGESIZE);
+    
+    // Calculate the aligned address and size
+    uintptr_t addr = (uintptr_t)Address;
+    uintptr_t aligned_addr = addr & ~(page_size - 1);
+    size_t aligned_size = ((addr + len + page_size - 1) & ~(page_size - 1)) - aligned_addr;
+
+    // Change memory protection to allow reading, writing, and executing
+    if (mprotect((void *)aligned_addr, aligned_size, PROT_READ | PROT_WRITE | PROT_EXEC) == -1)
     {
-        perror("Error changing memory protection");
-        return 0;
+        perror("[X] PatchNop: Error changing memory protection");
+        return FALSE;
     }
-    memset(Address, 0x90, len);
-    // Change the protection of the region
-    if (mprotect(Address, len, old_protection) == -1)
+
+    for (int n=0; n < (len/nopBytes_len); n++)
     {
-        perror("Error changing memory protection");
-        return 0;
+        //copy nop bytes
+        memcpy(Address, nopBytes, nopBytes_len);
+        Address += nopBytes_len;
+    }
+
+    // Restore the original memory protection
+    if (mprotect((void *)aligned_addr, aligned_size, PROT_READ | PROT_EXEC) == -1)
+    {
+        perror("[X] PatchNop: Error restoring memory protection");
+        return FALSE;
     }
 
     return TRUE;
@@ -197,29 +245,3 @@ uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) GetModuleBaseAddress(char
     return start_addr;
 }
 
-#include <libgen.h>
-void __attribute__((visibility(VISIBILITY_FLAG))) GetExePath(char *directory)
-{
-    static const uint MAX_LENGTH = 1024;
-    char *exepath = (char *)malloc(MAX_LENGTH);
-    char *dir;
-    ssize_t len = readlink("/proc/self/exe", exepath, MAX_LENGTH - 1);
-    if (len != -1)
-    {
-        exepath[len] = '\0';
-        // printf("exe path: %s\n", exepath);
-        dir = dirname(exepath);
-        // printf("Current directory: %s\n", dir);
-        strcpy(directory, dir);
-        size_t dirlen = strlen(dir);
-        directory[dirlen] = '/';
-        directory[dirlen + 1] = '\0';
-        dirlen++;
-    }
-    else
-    {
-        perror("readlink() error: can't fetch exe path");
-    }
-    free(exepath);
-    return;
-}
