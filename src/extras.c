@@ -18,7 +18,7 @@
 #include "extras.h"
 
 
-int __attribute__((visibility("hidden"))) GetExePath(char *directory, char *exename)
+int __attribute__((visibility(VISIBILITY_FLAG))) GetExePath(char *directory, char *exename)
 {
 /*
 #ifdef __bsd__
@@ -96,7 +96,7 @@ int __attribute__((visibility(VISIBILITY_FLAG))) GetPROTfromStr(char *permission
 {
     int _PROT = 0;
     for(int i=0; i < strlen(permission_str); i++) {
-        if(permission_str[i] == 'R' || permission_str[i] == 'R')
+        if(permission_str[i] == 'r' || permission_str[i] == 'R')
         {
             _PROT |= PROT_READ;     //read permission
         }
