@@ -1,6 +1,6 @@
 /*
  gamepwnage -- Cross Platform Game Hacking API(s)
- Copyright (c) 2024 bitware. All rights reserved.
+ Copyright (c) 2024-2025 bitware. All rights reserved.
 
  "gamepwnage" is released under the New BSD license (see LICENSE.txt).
  Go to the project home page for more info:
@@ -20,22 +20,25 @@
 //TODO: add default configs
 #endif
 
-typedef bool BOOL;
+#ifndef TRUE
 #define TRUE true;
+#endif
+#ifndef FALSE
 #define FALSE false;
-typedef uint8_t BYTE;
-
-
-#ifdef NO_EXPORT_SYM
-    #define VISIBILITY_FLAG "hidden"
-#else
-    #define VISIBILITY_FLAG "default"
 #endif
 
-BOOL __attribute__((visibility(VISIBILITY_FLAG))) WritetoMemory(void *Dest, void *Src, size_t Size, int old_protection);
-BOOL __attribute__((visibility(VISIBILITY_FLAG))) ReadfromMemory(void *Dest, void *Src, size_t Size, int old_protection);
-BOOL __attribute__((visibility(VISIBILITY_FLAG))) PatchNop(void *Address, size_t len);
-uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) GetAddress(uintptr_t Baseaddr, uintptr_t offsets[], int TotalOffset);
+#ifndef BYTE
+#define BYTE uint8_t;
+#endif
+#ifndef BOOL
+#define BOOL bool;
+#endif
 
-bool __attribute__((visibility(VISIBILITY_FLAG))) HookAddress(void *AddresstoHook, void *hookFunAddr, size_t len);
-uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) GetModuleBaseAddress(char *_library, char *_permissions);
+// typedef uint8_t BYTE;
+// typedef bool BOOL;
+
+
+BOOL __attribute__((visibility(VISIBILITY_FLAG))) write_mem(void *Dest, void *Src, size_t Size, int old_protection);
+BOOL __attribute__((visibility(VISIBILITY_FLAG))) read_mem(void *Dest, void *Src, size_t Size, int old_protection);
+
+uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) get_addr(uintptr_t Baseaddr, uintptr_t offsets[], int TotalOffset);
