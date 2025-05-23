@@ -22,7 +22,7 @@
 
 #include "mem.h"
 
-BOOL __attribute__((visibility(VISIBILITY_FLAG))) write_mem(void *Dest, void *Src, size_t Size, int old_protection)
+bool __attribute__((visibility(VISIBILITY_FLAG))) write_mem(void *Dest, void *Src, size_t Size, int old_protection)
 {
    // Get the system page size
     size_t page_size = sysconf(_SC_PAGESIZE);
@@ -39,7 +39,7 @@ BOOL __attribute__((visibility(VISIBILITY_FLAG))) write_mem(void *Dest, void *Sr
         perror("WritetoMemory: Error changing memory protection");
         printf("mprotect error code: %d\n", errno);
         */
-        return FALSE;
+        return false;
     }
 
     // Perform your memory modification here
@@ -53,13 +53,13 @@ BOOL __attribute__((visibility(VISIBILITY_FLAG))) write_mem(void *Dest, void *Sr
         perror("WritetoMemory: Error restoring memory protection");
         printf("mprotect error code: %d\n", errno);
         */
-        return FALSE;
+        return false;
     }
 
-    return TRUE;
+    return true;
 }
 
-BOOL __attribute__((visibility(VISIBILITY_FLAG))) read_mem(void *Dest, void *Src, size_t Size, int old_protection)
+bool __attribute__((visibility(VISIBILITY_FLAG))) read_mem(void *Dest, void *Src, size_t Size, int old_protection)
 {
    // Get the system page size
     size_t page_size = sysconf(_SC_PAGESIZE);
@@ -76,7 +76,7 @@ BOOL __attribute__((visibility(VISIBILITY_FLAG))) read_mem(void *Dest, void *Src
         perror("ReadfromMemory: Error changing memory protection");
         printf("mprotect error code: %d\n", errno);
         */
-        return FALSE;
+        return false;
     }
     memcpy(Dest, Src, Size);
     // Restore the original memory protection
@@ -86,9 +86,9 @@ BOOL __attribute__((visibility(VISIBILITY_FLAG))) read_mem(void *Dest, void *Src
         perror("ReadfromMemory: Error restoring memory protection");
         printf("mprotect error code: %d\n", errno);
         */
-        return FALSE;
+        return false;
     }
-    return TRUE;
+    return true;
 }
 
 uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) get_addr(uintptr_t Baseaddr, uintptr_t offsets[], int TotalOffset)

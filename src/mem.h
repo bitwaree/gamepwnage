@@ -20,25 +20,25 @@
 //TODO: add default configs
 #endif
 
-#ifndef TRUE
-#define TRUE true;
-#endif
-#ifndef FALSE
-#define FALSE false;
-#endif
+// #ifndef TRUE
+// #define TRUE true;
+// #endif
+// #ifndef FALSE
+// #define FALSE false;
+// #endif
 
-#ifndef BYTE
-#define BYTE uint8_t;
-#endif
-#ifndef BOOL
-#define BOOL bool;
-#endif
+// #ifndef BYTE
+// #define BYTE uint8_t;
+// #endif
+// #ifndef BOOL
+// #define BOOL bool;
+// #endif
 
 // typedef uint8_t BYTE;
 // typedef bool BOOL;
 
 
-BOOL __attribute__((visibility(VISIBILITY_FLAG))) write_mem(void *Dest, void *Src, size_t Size, int old_protection);
-BOOL __attribute__((visibility(VISIBILITY_FLAG))) read_mem(void *Dest, void *Src, size_t Size, int old_protection);
+bool __attribute__((visibility(VISIBILITY_FLAG))) write_mem(void *Dest, void *Src, size_t Size, int old_protection);
+bool __attribute__((visibility(VISIBILITY_FLAG))) read_mem(void *Dest, void *Src, size_t Size, int old_protection);
 
 uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) get_addr(uintptr_t Baseaddr, uintptr_t offsets[], int TotalOffset);
