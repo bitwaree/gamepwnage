@@ -39,8 +39,7 @@ uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) arm_hook64(uintptr_t Addr
     *((uint64_t*)(pseudomem + 16)) = hookFunAddr & 0xFFFFFFFFFFFFFFFF;  // copy the 64 bit address
     *((uint32_t*)(pseudomem + 24)) = popBytes & 0xFFFFFFFF;             // copy the 32 bit pop opcodes
 
-    int prot = get_prot(AddresstoHook);
-    if(write_mem((void *) AddresstoHook, (void *) pseudomem, len, prot ) != 1)
+    if(write_mem((void *) AddresstoHook, (void *) pseudomem, len) != 1)
     {
         free(pseudomem);
         return 0;
@@ -73,8 +72,7 @@ uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) arm_hook32(uintptr_t Addr
     *((uint32_t*)(pseudomem + 12)) = hookFunAddr & 0xFFFFFFFF;          // copy the 64 bit address
     *((uint32_t*)(pseudomem + 16)) = popBytes & 0xFFFFFFFF;             // copy the 32 bit pop opcodes
 
-    int prot = get_prot(AddresstoHook);
-    if(write_mem((void *) AddresstoHook, (void *) pseudomem, len, prot ) != 1)
+    if(write_mem((void *) AddresstoHook, (void *) pseudomem, len) != 1)
     {
         free(pseudomem);
         return 0;

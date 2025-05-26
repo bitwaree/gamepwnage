@@ -19,10 +19,10 @@
 #include <stdbool.h>
 #include <string.h>
 
-
 #include "mem.h"
+#include "proc.h"
 
-bool __attribute__((visibility(VISIBILITY_FLAG))) write_mem(void *Dest, void *Src, size_t Size, int old_protection)
+bool __attribute__((visibility(VISIBILITY_FLAG))) write_mem(void *Dest, void *Src, size_t len)
 {
    // Get the system page size
     size_t page_size = sysconf(_SC_PAGESIZE);
@@ -30,7 +30,14 @@ bool __attribute__((visibility(VISIBILITY_FLAG))) write_mem(void *Dest, void *Sr
     // Calculate the aligned address and size
     uintptr_t addr = (uintptr_t)Dest;
     uintptr_t aligned_addr = addr & ~(page_size - 1);
-    size_t aligned_size = ((addr + Size + page_size - 1) & ~(page_size - 1)) - aligned_addr;
+    size_t aligned_size = ((addr + len + page_size - 1) & ~(page_size - 1)) - aligned_addr;
+    // get the current protection
+    int old_protection = get_prot(aligned_addr);
+    if(old_protection == -1)
+    {
+        // fprintf(stderr, "can't retrive memory protection, at address: %p\n", aligned_addr);
+        return false;
+    }
 
     // Change memory protection to allow reading, writing, and executing
     if (mprotect((void *)aligned_addr, aligned_size, PROT_READ | PROT_WRITE | PROT_EXEC) == -1)
@@ -44,7 +51,7 @@ bool __attribute__((visibility(VISIBILITY_FLAG))) write_mem(void *Dest, void *Sr
 
     // Perform your memory modification here
     // ...
-    memcpy(Dest, Src, Size);
+    memcpy(Dest, Src, len);
 
     // Restore the original memory protection
     if (mprotect((void *)aligned_addr, aligned_size, old_protection) == -1)
@@ -59,7 +66,7 @@ bool __attribute__((visibility(VISIBILITY_FLAG))) write_mem(void *Dest, void *Sr
     return true;
 }
 
-bool __attribute__((visibility(VISIBILITY_FLAG))) read_mem(void *Dest, void *Src, size_t Size, int old_protection)
+bool __attribute__((visibility(VISIBILITY_FLAG))) read_mem(void *Dest, void *Src, size_t len)
 {
    // Get the system page size
     size_t page_size = sysconf(_SC_PAGESIZE);
@@ -67,7 +74,14 @@ bool __attribute__((visibility(VISIBILITY_FLAG))) read_mem(void *Dest, void *Src
     // Calculate the aligned address and size
     uintptr_t addr = (uintptr_t)Src;
     uintptr_t aligned_addr = addr & ~(page_size - 1);
-    size_t aligned_size = ((addr + Size + page_size - 1) & ~(page_size - 1)) - aligned_addr;
+    size_t aligned_size = ((addr + len + page_size - 1) & ~(page_size - 1)) - aligned_addr;
+    // get the current protection
+    int old_protection = get_prot(aligned_addr);
+    if(old_protection == -1)
+    {
+        // fprintf(stderr, "can't retrive memory protection at address: %p\n", aligned_addr);
+        return false;
+    }
 
     // Change memory protection to allow reading, writing, and executing
     if (mprotect((void *)aligned_addr, aligned_size, PROT_READ | PROT_WRITE | PROT_EXEC) == -1)
@@ -78,7 +92,7 @@ bool __attribute__((visibility(VISIBILITY_FLAG))) read_mem(void *Dest, void *Src
         */
         return false;
     }
-    memcpy(Dest, Src, Size);
+    memcpy(Dest, Src, len);
     // Restore the original memory protection
     if (mprotect((void *)aligned_addr, aligned_size, old_protection) == -1)
     {
