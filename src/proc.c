@@ -20,7 +20,7 @@ uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) get_module_addr(char *_mo
     if (!fd)
     {
         //perror("Can't open map...");
-        return 1;
+        return 0;
     }
 
     char line[1024];
