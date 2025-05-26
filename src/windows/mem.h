@@ -11,6 +11,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// implementations for internal use
 bool write_mem(void *Dest, void *Src, size_t len);
 bool read_mem(void *Dest, void *Src, size_t len);
 uintptr_t get_addr(uintptr_t Baseaddr, uintptr_t offsets[], int TotalOffset);
+
+// implementations for external use
+#include <windows.h>
+bool write_mem_winex(void* Dest, void* Src, size_t len, HANDLE hProcess);
+bool read_mem_winex(void* Dest, void* Src, size_t len, HANDLE hProcess);
+uintptr_t get_addr_winex(uintptr_t Baseaddr, uintptr_t offsets[], int TotalOffset, HANDLE hProcess);

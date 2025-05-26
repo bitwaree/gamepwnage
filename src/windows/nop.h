@@ -11,4 +11,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// implementations for internal use
 bool patch_nop(void *Address, size_t len);
+// implementations for external use
+#include <windows.h>
+bool patch_nop_winex(void *Address, size_t len, HANDLE hProcess);
