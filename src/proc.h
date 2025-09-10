@@ -14,4 +14,4 @@
 
 
 uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) get_module_addr(char *_module, char *_permissions);
-int __attribute__((visibility(VISIBILITY_FLAG))) get_prot(int addr);
+int __attribute__((visibility(VISIBILITY_FLAG))) get_prot(uintptr_t addr);

@@ -32,7 +32,7 @@ uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) get_module_addr(char *_mo
         char *library_name = strstr(line, _module);
         if (library_name != NULL)
         {
-            if(*(int*)_permissions == 0)
+            if(_permissions == 0 || *(char*)_permissions == 0)
             {
                 // if permission not specified,
                 // it will return the first mapped address
@@ -59,7 +59,7 @@ uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) get_module_addr(char *_mo
     return start_addr;
 }
 
-int __attribute__((visibility(VISIBILITY_FLAG))) get_prot(int addr)
+int __attribute__((visibility(VISIBILITY_FLAG))) get_prot(uintptr_t addr)
 {
     FILE* fd = fopen("/proc/self/maps", "r");
     if (!fd)
