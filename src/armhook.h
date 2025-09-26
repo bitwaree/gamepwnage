@@ -9,8 +9,11 @@
 #pragma once
 #include "config.h"
 #include <stddef.h>
-// For 64 bit armhook: requires 28 bytes minimum
-uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) arm_hook64(uintptr_t AddresstoHook, uintptr_t hookFunAddr, size_t len);
 
+#if defined(__aarch64__)
+// For 64 bit armhook: requires 28 bytes minimum
+uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) arm_hook64(uintptr_t addr, uintptr_t branchaddr, size_t len);
+#elif defined(__arm__)
 //For 32 bit armhook: requires 20 bytes minimum
-uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) arm_hook32(uintptr_t AddresstoHook, uintptr_t hookFunAddr, size_t len);
+uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) arm_hook32(uintptr_t addr, uintptr_t branchaddr, size_t len);
+#endif
