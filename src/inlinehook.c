@@ -25,11 +25,11 @@
 #include "armhook.h"
 #endif
 #if defined(__arm__) && !defined(__aarch64__)
-#define HOOKBYTES_LEN 20
-#define HOOK_JMPBACKADDR_OFFSET 16
+#define HOOKBYTES_LEN 12
+#define HOOK_JMPBACKADDR_OFFSET HOOKBYTES_LEN
 #elif defined(__aarch64__) && !defined(__arm__)
-#define HOOKBYTES_LEN 28
-#define HOOK_JMPBACKADDR_OFFSET 24
+#define HOOKBYTES_LEN 20
+#define HOOK_JMPBACKADDR_OFFSET HOOKBYTES_LEN
 #endif
 
 // typedef struct {

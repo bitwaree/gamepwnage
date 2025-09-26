@@ -19,10 +19,9 @@
 uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) arm_hook64(uintptr_t AddresstoHook, uintptr_t hookFunAddr, size_t len)
 {
     const uint32_t nopBytes = 0xd503201f; // nop in aarch64
-    const uint32_t popBytes = 0xf85f83f1; // ldr x17, [sp, #-8]
-    const uint32_t shHookCode[4] = { 0xf81f83f1, 0x10000071, 0xf9400231, 0xd61f0220 };
+    const uint32_t shHookCode[3] = { 0x10000071, 0xf9400231, 0xd61f0220 };
 
-    if (len%4 != 0 || len<28)
+    if (len%4 != 0 || len < 20)
     {
         //not alligned or not enough bytes
         return 0;
@@ -35,9 +34,8 @@ uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) arm_hook64(uintptr_t Addr
     }
 
     //overlay shellcode
-    memcpy(pseudomem, shHookCode, 16);
-    *((uint64_t*)(pseudomem + 16)) = hookFunAddr & 0xFFFFFFFFFFFFFFFF;  // copy the 64 bit address
-    *((uint32_t*)(pseudomem + 24)) = popBytes & 0xFFFFFFFF;             // copy the 32 bit pop opcodes
+    memcpy(pseudomem, shHookCode, sizeof(shHookCode));
+    *((uint64_t*)(pseudomem + sizeof(shHookCode))) = hookFunAddr & 0xFFFFFFFFFFFFFFFF;  // copy the 64 bit address
 
     if(write_mem((void *) AddresstoHook, (void *) pseudomem, len) != 1)
     {
@@ -46,16 +44,15 @@ uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) arm_hook64(uintptr_t Addr
     }
     free(pseudomem);
 
-    return AddresstoHook + 24;   // return at the pop instruction
+    return AddresstoHook + sizeof(shHookCode) + 8;   // return at the pop instruction
 }
 
 uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) arm_hook32(uintptr_t AddresstoHook, uintptr_t hookFunAddr, size_t len)
 {
     const uint32_t nopBytes = 0xe1a00000; // nop in arm
-    const uint32_t popBytes = 0xe51dc004; // ldr r12, [sp, #-4]
-    const uint32_t shHookCode[3] = { 0xe50dc004, 0xe59fc000, 0xe12fff1c };
+    const uint32_t shHookCode[2] = { 0xe59fc000, 0xe12fff1c };
 
-    if (len%4 != 0 || len<20)
+    if (len%4 != 0 || len<12)
     {
         //not alligned or not enough bytes
         return 0;
@@ -68,9 +65,8 @@ uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) arm_hook32(uintptr_t Addr
     }
 
     //overlay shellcode
-    memcpy(pseudomem, shHookCode, 12);
-    *((uint32_t*)(pseudomem + 12)) = hookFunAddr & 0xFFFFFFFF;          // copy the 32 bit address
-    *((uint32_t*)(pseudomem + 16)) = popBytes & 0xFFFFFFFF;             // copy the 32 bit pop opcodes
+    memcpy(pseudomem, shHookCode, sizeof(shHookCode));
+    *((uint32_t*)(pseudomem + sizeof(shHookCode))) = hookFunAddr & 0xFFFFFFFF;          // copy the 32 bit address
 
     if(write_mem((void *) AddresstoHook, (void *) pseudomem, len) != 1)
     {
@@ -79,5 +75,5 @@ uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) arm_hook32(uintptr_t Addr
     }
     free(pseudomem);
 
-    return AddresstoHook + 16;   // return at the pop instruction
+    return AddresstoHook + sizeof(shHookCode) + 4;   // return at the pop instruction
 }
