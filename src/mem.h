@@ -42,3 +42,4 @@ bool __attribute__((visibility(VISIBILITY_FLAG))) write_mem(void *Dest, void *Sr
 bool __attribute__((visibility(VISIBILITY_FLAG))) read_mem(void *Dest, void *Src, size_t len);
 
 uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) get_addr(uintptr_t Baseaddr, uintptr_t offsets[], int TotalOffset);
+void *mmap_near(void *hint, size_t size, int prot);

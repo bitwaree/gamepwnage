@@ -126,3 +126,15 @@ uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) get_addr(uintptr_t Basead
 
     return Address; // Return Final Address
 }
+
+__attribute__((visibility(VISIBILITY_FLAG)))
+void *mmap_near(void *hint, size_t size, int prot) {
+    size_t page_size = sysconf(_SC_PAGESIZE);
+    uintptr_t aligned_addr = (uintptr_t) hint & ~(page_size - 1);
+    size_t aligned_size = (((uintptr_t)hint + size + page_size - 1) &
+        ~(page_size - 1)) - aligned_addr;
+    uintptr_t nearby = ((uintptr_t) find_unmapped((void*) aligned_addr, aligned_size)
+        & ~(page_size - 1));
+    return mmap((void*) nearby, aligned_size, prot,
+        MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS, -1, 0);
+}
