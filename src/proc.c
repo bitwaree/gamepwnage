@@ -7,6 +7,8 @@
  https://github.com/bitwaree/gamepwnage
 */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -65,87 +67,57 @@ unsigned int get_proc_map(const char *module,
     fclose(fd);
     return idx;
 }
-
-uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) get_module_addr(char *_module, char *_permissions)
+__attribute__((visibility(VISIBILITY_FLAG))) void *get_module_addr(
+    char *_module, char *_permissions)
 {
-    FILE* fd = fopen("/proc/self/maps", "r");
-    if (!fd)
-    {
-        //perror("Can't open map...");
-        return 0;
-    }
-
-    char line[1024];
-    char *start_addr_str = 0;
-    char *end_addr_str = 0;
-
-    while (fgets(line, sizeof(line), fd) != NULL)
-    {
-        char *library_name = strstr(line, _module);
-        if (library_name != NULL)
-        {
-            if(_permissions == 0 || *(char*)_permissions == 0)
-            {
-                // if permission not specified,
-                // it will return the first mapped address
-                start_addr_str = strtok(line, "-");
-                end_addr_str = strtok(NULL, " ");
-                break;
-            }
-            char *protection = strstr(line, _permissions);
-            if (protection != NULL)
-            {
-                start_addr_str = strtok(line, "-");
-                end_addr_str = strtok(NULL, " ");
+    unsigned int map_count = get_proc_map_count(_module);
+    if(!map_count)
+        return 0;    // map wth module name not found
+    proc_map *maps = calloc(map_count, sizeof(proc_map));
+    if(!maps)
+        return 0;    // calloc failed
+    map_count = get_proc_map(_module, maps, map_count);
+    uintptr_t addr = 0;
+    if(!_permissions || strlen(_permissions) < 3) {
+        addr = maps[0].start;    // select the first map if nothing specified
+    } else {
+        int prot = 0;
+        if(_permissions[0] == 'r')
+            prot |= PROT_READ;
+        if(_permissions[1] == 'w')
+            prot |= PROT_WRITE;
+        if(_permissions[0] == 'x')
+            prot |= PROT_EXEC;
+        for(unsigned int i = 0; i < map_count; i++) {
+            if(maps[i].prot == prot) {
+                addr = maps[i].start;
                 break;
             }
         }
     }
-
-    fclose(fd);
-    // convert the hex into text
-    uintptr_t start_addr = 0, end_addr = 0;
-    sscanf(start_addr_str, "%lx", &start_addr);
-    sscanf(end_addr_str, "%lx", &end_addr);
-
-    return start_addr;
+    free(maps);
+    return (void*) addr;
 }
-
-int __attribute__((visibility(VISIBILITY_FLAG))) get_prot(uintptr_t addr)
+__attribute__((visibility(VISIBILITY_FLAG))) int get_prot(uintptr_t addr)
 {
-    FILE* fd = fopen("/proc/self/maps", "r");
-    if (!fd)
-    {
-        //perror("Can't open map...");
-        return -1;
-    }
-
-    char line[1024];
-    // convert the hex into text
-    uintptr_t start_addr, end_addr;
-    char prot_str[5];
-
-    while (fgets(line, sizeof(line), fd) != NULL)
-    {
-        // <start_addr>-<end_addr> rwxp ....
-        sscanf(line, "%lx-%lx %4s", &start_addr, &end_addr, prot_str);
-        if (addr >= start_addr && addr < end_addr )
-            break;
-    }
-
-    fclose(fd);
-
+    unsigned int map_count = get_proc_map_count(0);
+    if(!map_count)
+        return 0;    // map wth module name not found
+    proc_map *maps = calloc(map_count, sizeof(proc_map));
+    if(!maps)
+        return 0;    // calloc failed
+    map_count = get_proc_map(0, maps, map_count);
     int prot = 0;
-    if(prot_str[0] == 'r')
-        prot |= PROT_READ;
-    if(prot_str[1] == 'w')
-        prot |= PROT_WRITE;
-    if(prot_str[2] == 'x')
-        prot |= PROT_EXEC;
-
+    for(unsigned int i = 0; i < map_count; i++) {
+        if(addr >= maps[i].start
+        && addr < maps[i].end) {
+            prot = maps[i].prot;
+            break;
+        }
+    }
+    free(maps);
     return prot;
 }
-
 __attribute__((visibility(VISIBILITY_FLAG)))
 void* find_unmapped(void *target, size_t size) {
     unsigned int map_count = get_proc_map_count(0);
