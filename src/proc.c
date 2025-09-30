@@ -14,7 +14,8 @@
 #include <sys/mman.h>
 #include "proc.h"
 
- __attribute__((visibility(VISIBILITY_FLAG))) unsigned int get_proc_map_count() {
+__attribute__((visibility(VISIBILITY_FLAG)))
+unsigned int get_proc_map_count(const char *module) {
     FILE* fd = fopen("/proc/self/maps", "r");
     if (!fd) {
         //perror("Can't open map...");
@@ -24,13 +25,17 @@
     char line[1024];
     unsigned int idx = 0;
     while (fgets(line, sizeof(line), fd) != NULL) {
+        if (module) {
+            if (!strstr(line, module))
+                continue;
+        }
         idx++;
     }
     fclose(fd);
     return idx;
 }
-
- __attribute__((visibility(VISIBILITY_FLAG))) unsigned int get_proc_map(
+__attribute__((visibility(VISIBILITY_FLAG)))
+unsigned int get_proc_map(const char *module,
     proc_map *map_array, unsigned int max_map_count)  {
     FILE* fd = fopen("/proc/self/maps", "r");
     if (!fd) {
@@ -42,6 +47,10 @@
     unsigned int idx = 0;
     char prot_str[5];
     while (fgets(line, sizeof(line), fd) != NULL && idx < max_map_count) {
+        if (module) {
+            if (!strstr(line, module))
+                continue;
+        }
         // <start_addr>-<end_addr> rwxp ....
         sscanf(line, "%lx-%lx %4s", &map_array[idx].start, &map_array[idx].end, prot_str);
         map_array[idx].prot = 0;
@@ -139,13 +148,13 @@ int __attribute__((visibility(VISIBILITY_FLAG))) get_prot(uintptr_t addr)
 
 __attribute__((visibility(VISIBILITY_FLAG)))
 void* find_unmapped(void *target, size_t size) {
-    unsigned int map_count = get_proc_map_count();
+    unsigned int map_count = get_proc_map_count(0);
     proc_map *maps = calloc(map_count, sizeof(proc_map));
     if(!maps) {
         // calloc() failed
         return 0;
     }
-    unsigned int rd_map_count = get_proc_map(maps, map_count);
+    unsigned int rd_map_count = get_proc_map(0, maps, map_count);
     unsigned int target_index = -1;
     // get the target's index
     for(unsigned int i = 0; i < rd_map_count; i++) {
