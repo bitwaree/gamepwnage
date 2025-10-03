@@ -86,7 +86,7 @@ __attribute__((visibility(VISIBILITY_FLAG))) void *get_module_addr(
             prot |= PROT_READ;
         if(_permissions[1] == 'w')
             prot |= PROT_WRITE;
-        if(_permissions[0] == 'x')
+        if(_permissions[3] == 'x')
             prot |= PROT_EXEC;
         for(unsigned int i = 0; i < map_count; i++) {
             if(maps[i].prot == prot) {
