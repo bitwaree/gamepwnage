@@ -96,11 +96,19 @@ void sigscan_cleanup(sigscan_handle *handle) {
 void *get_sigscan_result(sigscan_handle *handle) {
     if(handle->next == (void*)-1)
         return (void*)-1;          // all possible addresses has been scanned
+    // parse protection flags
+    int prot = 0;
+    if(handle->flags & GPWN_SIGSCAN_WMEM)
+        prot |= PROT_WRITE;
+    if(handle->flags & GPWN_SIGSCAN_XMEM)
+        prot |= PROT_EXEC;
     // if range specified (override)
     if(handle->memrange.start) {
-        int prot = get_prot((uintptr_t) handle->memrange.start);
-        if((prot & PROT_READ) != PROT_READ)
+        int _prot = get_prot((uintptr_t) handle->memrange.start);
+        if((_prot & PROT_READ))
             return (void*) -1;
+        if(prot && (_prot & prot) != prot)
+            return (void*) -1;      // protection mismatch
         size_t offset;
         if(!handle->next) {
             // first scan
@@ -135,9 +143,11 @@ void *get_sigscan_result(sigscan_handle *handle) {
         free(maps);
         return (void*) -1;
     }
-    // scan all r?x memory
+    // scan all memory which is readable and satisfies the prot flags
     for(unsigned int i = 0; i < map_count; i++) {
-        if((maps[i].prot & PROT_EXEC) && (maps[i].prot & PROT_READ)) {
+        if((maps[i].prot & PROT_READ)) {
+            if(prot && (maps[i].prot & prot) != prot)
+                continue;       // protection mismatch
             byte *data;
             size_t data_len;
             size_t offset;
@@ -153,6 +163,15 @@ void *get_sigscan_result(sigscan_handle *handle) {
                 data_len = maps[i].end - (size_t) handle->next;
             } else {
                 continue;
+            }
+            // in force mode override the memory prot
+            if(handle->flags & GPWN_SIGSCAN_FORCEMODE) {
+                if(mprotect(
+                        (void*) maps[i].start,
+                        (maps[i].end - maps[i].start),
+                        maps[i].prot | PROT_READ
+                    ) == -1)
+                    continue;
             }
             offset = search_sigpattern_hybrid(data, data_len,
                 handle->sig, handle->mask, handle->sig_size);
