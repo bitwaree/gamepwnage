@@ -7,6 +7,17 @@
  https://github.com/bitwaree/gamepwnage
 */
 
+#ifdef GPWN_USING_BUILD_CONFIG
+#include "config.h"
+#else
+#ifndef GPWNAPI
+#define GPWNAPI
+#endif
+#ifndef GPWN_BKND
+#define GPWN_BKND
+#endif
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -21,7 +32,7 @@
 #include "armhook.h"
 
 #if defined(__aarch64__)
-uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) arm_hook64(uintptr_t addr, uintptr_t branchaddr, size_t len)
+GPWNAPI uintptr_t arm_hook64(uintptr_t addr, uintptr_t branchaddr, size_t len)
 {
     const uint32_t nopBytes = 0xd503201f; // nop in aarch64
     const uint32_t shHookCode[3] = { 0x10000071, 0xf9400231, 0xd61f0220 };
@@ -67,7 +78,7 @@ uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) arm_hook64(uintptr_t addr
     return addr + len;
 }
 #elif defined(__arm__)
-uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) arm_hook32(uintptr_t addr, uintptr_t branchaddr, size_t len)
+GPWNAPI uintptr_t arm_hook32(uintptr_t addr, uintptr_t branchaddr, size_t len)
 {
     const uint32_t nopBytes = 0xe1a00000; // nop in arm
     const uint32_t shHookCode[2] = { 0xe59fc000, 0xe12fff1c };

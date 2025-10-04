@@ -8,9 +8,22 @@
 */
 
 #pragma once
+
+#ifdef GPWN_USING_BUILD_CONFIG
+#include "config.h"
+#else
+#ifndef GPWNAPI
+#define GPWNAPI
+#endif
+#endif
+
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct {
     uintptr_t start; /* starting addr of the map */
@@ -18,8 +31,12 @@ typedef struct {
     int prot;        /* protection of the map    */
 } proc_map;
 
-unsigned int get_proc_map_count(const char *module);
-unsigned int get_proc_map(const char *module, proc_map *map_array, unsigned int max_map_count);
-void *get_module_addr(char *_module, char *_permissions);
-int get_prot(uintptr_t addr);
-void *find_unmapped(void *target, size_t size);
+GPWNAPI unsigned int get_proc_map_count(const char *module);
+GPWNAPI unsigned int get_proc_map(const char *module, proc_map *map_array, unsigned int max_map_count);
+GPWNAPI void *get_module_addr(char *_module, char *_permissions);
+GPWNAPI int get_prot(uintptr_t addr);
+GPWNAPI void *find_unmapped(void *target, size_t size);
+
+#ifdef __cplusplus
+}
+#endif

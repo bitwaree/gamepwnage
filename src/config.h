@@ -9,13 +9,27 @@
 
 
 //TWEAKS
-#ifndef CONFIG_H_
-#define CONFIG_H_
-#define NO_EXPORT_SYM           //Comment if you want api symbols to be exported
+#ifndef GPWN_CONFIG_H_
+#define GPWN_CONFIG_H_
+
+// #define EXPORT_SYM              // Uncomment if you want api symbols to be exported
+// #define GPWN_DEBUG              // Uncomment for debugging symbols/outputs
+
+#ifdef GPWN_DEBUG
+    #ifndef EXPORT_SYM
+        #define EXPORT_SYM
+    #endif
+    #define GPWN_BKND __attribute__((visibility("default")))
+#else
+    #define GPWN_BKND __attribute__((visibility("hidden")))
 #endif
 
-#ifdef NO_EXPORT_SYM
-    #define VISIBILITY_FLAG "hidden"
+#ifdef EXPORT_SYM
+    // #define VISIBILITY_FLAG "default"
+    #define GPWNAPI __attribute__((visibility("default")))
 #else
-    #define VISIBILITY_FLAG "default"
+    // #define VISIBILITY_FLAG "hidden"
+    #define GPWNAPI __attribute__((visibility("hidden")))
+#endif
+
 #endif

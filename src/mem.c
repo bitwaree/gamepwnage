@@ -7,6 +7,17 @@
  https://github.com/bitwaree/gamepwnage
 */
 
+#ifdef GPWN_USING_BUILD_CONFIG
+#include "config.h"
+#else
+#ifndef GPWNAPI
+#define GPWNAPI
+#endif
+#ifndef GPWN_BKND
+#define GPWN_BKND
+#endif
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -22,7 +33,7 @@
 #include "mem.h"
 #include "proc.h"
 
-bool __attribute__((visibility(VISIBILITY_FLAG))) write_mem(void *Dest, void *Src, size_t len)
+GPWNAPI bool write_mem(void *Dest, void *Src, size_t len)
 {
    // Get the system page size
     size_t page_size = sysconf(_SC_PAGESIZE);
@@ -65,8 +76,7 @@ bool __attribute__((visibility(VISIBILITY_FLAG))) write_mem(void *Dest, void *Sr
 
     return true;
 }
-
-bool __attribute__((visibility(VISIBILITY_FLAG))) read_mem(void *Dest, void *Src, size_t len)
+GPWNAPI bool read_mem(void *Dest, void *Src, size_t len)
 {
    // Get the system page size
     size_t page_size = sysconf(_SC_PAGESIZE);
@@ -104,8 +114,7 @@ bool __attribute__((visibility(VISIBILITY_FLAG))) read_mem(void *Dest, void *Src
     }
     return true;
 }
-
-uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) get_addr(uintptr_t Baseaddr, uintptr_t offsets[], int TotalOffset)
+GPWNAPI uintptr_t get_addr(uintptr_t Baseaddr, uintptr_t offsets[], int TotalOffset)
 {
 
     int i = 0;
@@ -126,9 +135,7 @@ uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) get_addr(uintptr_t Basead
 
     return Address; // Return Final Address
 }
-
-__attribute__((visibility(VISIBILITY_FLAG)))
-void *mmap_near(void *hint, size_t size, int prot) {
+GPWNAPI void *mmap_near(void *hint, size_t size, int prot) {
     size_t page_size = sysconf(_SC_PAGESIZE);
     uintptr_t aligned_addr = (uintptr_t) hint & ~(page_size - 1);
     size_t aligned_size = (((uintptr_t)hint + size + page_size - 1) &

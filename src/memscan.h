@@ -1,8 +1,28 @@
+/*
+ gamepwnage -- Cross Platform Game Hacking API(s)
+ Copyright (c) 2024-2025 bitware. All rights reserved.
+
+ "gamepwnage" is released under the New BSD license (see LICENSE.txt).
+ Go to the project home page for more info:
+ https://github.com/bitwaree/gamepwnage
+*/
+
 #pragma once
+
+#ifdef GPWN_USING_BUILD_CONFIG
+#include "config.h"
+#else
+#ifndef GPWNAPI
+#define GPWNAPI
+#endif
+#endif
 
 #include <stdint.h>
 #include <stddef.h>
-#include <sys/uio.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef unsigned char byte;
 struct _memrange {
@@ -32,8 +52,12 @@ Note:
 (*) If GPWN_SIGSCAN_FORCEMODE used, it will attempt overriding protection before
     reading.
 */
-sigscan_handle *sigscan_setup(const char *pattern_str, const char *libname, int flags);
-sigscan_handle *sigscan_setup_raw(byte *sigbyte, byte *mask, size_t sig_size, uintptr_t start_addr, uintptr_t end_addr, int flags);
-void sigscan_cleanup(sigscan_handle *handle);
+GPWNAPI sigscan_handle *sigscan_setup(const char *pattern_str, const char *libname, int flags);
+GPWNAPI sigscan_handle *sigscan_setup_raw(byte *sigbyte, byte *mask, size_t sig_size, uintptr_t start_addr, uintptr_t end_addr, int flags);
+GPWNAPI void sigscan_cleanup(sigscan_handle *handle);
 
-void *get_sigscan_result(sigscan_handle *handle);
+GPWNAPI void *get_sigscan_result(sigscan_handle *handle);
+
+#ifdef __cplusplus
+}
+#endif

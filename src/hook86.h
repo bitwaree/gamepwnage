@@ -8,8 +8,20 @@
 */
 
 #pragma once
+
+#ifdef GPWN_USING_BUILD_CONFIG
 #include "config.h"
+#else
+#ifndef GPWNAPI
+#define GPWNAPI
+#endif
+#endif
+
 #include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
 x86_32 hook -- atleast 5 bytes required to place a hook
@@ -17,7 +29,7 @@ x86_32 hook -- atleast 5 bytes required to place a hook
 
 RETURNS     -- the address where the hook should jmp back
 */
-uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) hook_x86(void *AddresstoHook, void *hookFunAddr, size_t len);
+GPWNAPI uintptr_t hook_x86(void *AddresstoHook, void *hookFunAddr, size_t len);
 
 /*
 x86_64 hook -- atleast 16 bytes required to place a hook
@@ -28,5 +40,9 @@ x86_64 hook -- atleast 16 bytes required to place a hook
 RETURNS     -- the address where the hook should jmp back
 */
 #if defined(__x86_64__) || defined(__amd64__)
-uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) hook_x64(void *AddresstoHook, void *hookFunAddr, size_t len);
+GPWNAPI uintptr_t hook_x64(void *AddresstoHook, void *hookFunAddr, size_t len);
+#endif
+
+#ifdef __cplusplus
+}
 #endif

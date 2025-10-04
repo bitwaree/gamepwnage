@@ -7,6 +7,17 @@
  https://github.com/bitwaree/gamepwnage
 */
 
+#ifdef GPWN_USING_BUILD_CONFIG
+#include "config.h"
+#else
+#ifndef GPWNAPI
+#define GPWNAPI
+#endif
+#ifndef GPWN_BKND
+#define GPWN_BKND
+#endif
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -25,8 +36,7 @@ x86_32 hook -- atleast 5 bytes required to place a hook
 
 RETURNS     -- the address where the hook should jmp back
 */
-__attribute__((visibility(VISIBILITY_FLAG)))
-uintptr_t hook_x86(void *AddresstoHook, void *hookFunAddr, size_t len)
+GPWNAPI uintptr_t hook_x86(void *AddresstoHook, void *hookFunAddr, size_t len)
 {
     if (len < 5)
     {
@@ -76,8 +86,7 @@ x86_64 hook -- atleast 16 bytes required to place a hook
 RETURNS     -- the address where the hook should jmp back
 */
 #if defined(__x86_64__) || defined(__amd64__)
-__attribute__((visibility(VISIBILITY_FLAG)))
-uintptr_t hook_x64(void *AddresstoHook, void *hookFunAddr, size_t len)
+GPWNAPI uintptr_t hook_x64(void *AddresstoHook, void *hookFunAddr, size_t len)
 {
     static const unsigned char jmp_sample[14] = {  
         0x50, 0x48, 0xb8, 0xef, 0xcd, 0xab, 0x90, 0x78, 0x56, 0x34, 0x12, 0xff,

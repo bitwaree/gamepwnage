@@ -7,8 +7,21 @@
  https://github.com/bitwaree/gamepwnage
 */
 
+#pragma once
+
+#ifdef GPWN_USING_BUILD_CONFIG
 #include "config.h"
+#else
+#ifndef GPWNAPI
+#define GPWNAPI
+#endif
+#endif
+
 #include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct {
     void *address;          // where to place hook
@@ -26,5 +39,9 @@ typedef struct {
 #define GPWN_ARM_NANOHOOK       0x2 /* 1 instructions, 4 bytes  */
 #endif
 
-hook_handle* __attribute__((visibility(VISIBILITY_FLAG))) hook_addr(void *address, void *fake, void **original_func, int flags);
-bool __attribute__((visibility(VISIBILITY_FLAG))) rm_hook(hook_handle *handle);
+GPWNAPI hook_handle* hook_addr(void *address, void *fake, void **original_func, int flags);
+GPWNAPI bool rm_hook(hook_handle *handle);
+
+#ifdef __cplusplus
+}
+#endif

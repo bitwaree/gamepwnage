@@ -8,38 +8,28 @@
 */
 
 #pragma once
+
+#ifdef GPWN_USING_BUILD_CONFIG
 #include "config.h"
+#else
+#ifndef GPWNAPI
+#define GPWNAPI
+#endif
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 
-
-#ifndef CONFIG_H_
-//config.h not included
-//default configs
-
-//TODO: add default configs
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-// #ifndef TRUE
-// #define TRUE true;
-// #endif
-// #ifndef FALSE
-// #define FALSE false;
-// #endif
+GPWNAPI bool write_mem(void *Dest, void *Src, size_t len);
+GPWNAPI bool read_mem(void *Dest, void *Src, size_t len);
 
-// #ifndef BYTE
-// #define BYTE uint8_t;
-// #endif
-// #ifndef BOOL
-// #define BOOL bool;
-// #endif
+GPWNAPI uintptr_t get_addr(uintptr_t Baseaddr, uintptr_t offsets[], int TotalOffset);
+GPWNAPI void *mmap_near(void *hint, size_t size, int prot);
 
-// typedef uint8_t BYTE;
-// typedef bool BOOL;
-
-
-bool __attribute__((visibility(VISIBILITY_FLAG))) write_mem(void *Dest, void *Src, size_t len);
-bool __attribute__((visibility(VISIBILITY_FLAG))) read_mem(void *Dest, void *Src, size_t len);
-
-uintptr_t __attribute__((visibility(VISIBILITY_FLAG))) get_addr(uintptr_t Baseaddr, uintptr_t offsets[], int TotalOffset);
-void *mmap_near(void *hint, size_t size, int prot);
+#ifdef __cplusplus
+}
+#endif

@@ -7,7 +7,16 @@
  https://github.com/bitwaree/gamepwnage
 */
 
+#ifdef GPWN_USING_BUILD_CONFIG
 #include "config.h"
+#else
+#ifndef GPWNAPI
+#define GPWNAPI
+#endif
+#ifndef GPWN_BKND
+#define GPWN_BKND
+#endif
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,17 +27,18 @@
 #include "proc.h"
 #include "memscan.h"
 
-ssize_t parse_sigpattern(const char *in_pattern, byte **sigbyte, byte **mask);
+GPWN_BKND size_t parse_sigpattern(const char *in_pattern,
+    byte **sigbyte, byte **mask);
 /*
-size_t search_sigpattern(byte *data, size_t data_len,
+GPWN_BKND size_t search_sigpattern(byte *data, size_t data_len,
     byte *sigbyte, byte *mask, size_t sig_len);
 */
-size_t search_sigpattern4(uint32_t *data, size_t data_len,
+GPWN_BKND size_t search_sigpattern4(uint32_t *data, size_t data_len,
     uint32_t *sigbyte, uint32_t *mask, size_t sig_len);
-size_t search_sigpattern_hybrid(byte *data, size_t data_len,
+GPWN_BKND size_t search_sigpattern_hybrid(byte *data, size_t data_len,
     byte *sigbyte, byte *mask, size_t sig_len);
 
-sigscan_handle *sigscan_setup(const char *pattern_str,
+GPWNAPI sigscan_handle *sigscan_setup(const char *pattern_str,
     const char *libname, int flags) {
     sigscan_handle *handle = malloc(sizeof(sigscan_handle));
     if(!handle) {
@@ -52,8 +62,8 @@ sigscan_handle *sigscan_setup(const char *pattern_str,
     }
     return handle;
 }
-sigscan_handle *sigscan_setup_raw(byte *sigbyte, byte *mask, size_t sig_size,
-    uintptr_t start_addr, uintptr_t end_addr, int flags) {
+GPWNAPI sigscan_handle *sigscan_setup_raw(byte *sigbyte, byte *mask,
+    size_t sig_size, uintptr_t start_addr, uintptr_t end_addr, int flags) {
     sigscan_handle *handle = malloc(sizeof(sigscan_handle));
     if(!handle) {
         // allocation failed
@@ -85,7 +95,7 @@ sigscan_handle *sigscan_setup_raw(byte *sigbyte, byte *mask, size_t sig_size,
 
     return handle;
 }
-void sigscan_cleanup(sigscan_handle *handle) {
+GPWNAPI void sigscan_cleanup(sigscan_handle *handle) {
     if(handle->libname)
         free(handle->libname);
     free(handle->sig);
@@ -93,7 +103,7 @@ void sigscan_cleanup(sigscan_handle *handle) {
     free(handle);
 }
 
-void *get_sigscan_result(sigscan_handle *handle) {
+GPWNAPI void *get_sigscan_result(sigscan_handle *handle) {
     if(handle->next == (void*)-1)
         return (void*)-1;          // all possible addresses has been scanned
     // parse protection flags
@@ -198,7 +208,7 @@ static inline uint8_t hextonib(char hex) {
         return hex - 'A' + 0xa;
     return 0;
 }
-ssize_t parse_sigpattern(const char *in_pattern,
+GPWN_BKND size_t parse_sigpattern(const char *in_pattern,
     byte **sigbyte, byte **mask) {
     *sigbyte = malloc((strlen(in_pattern)/2)+1);
     *mask = malloc((strlen(in_pattern)/2)+1);
@@ -242,7 +252,7 @@ ssize_t parse_sigpattern(const char *in_pattern,
 }
 /*
 // 1 byte simple precision scanner
-size_t search_sigpattern(byte *data, size_t data_len,
+GPWN_BKND size_t search_sigpattern(byte *data, size_t data_len,
     byte *sigbyte, byte *mask, size_t sig_len) {
     for(size_t i = 0; i <= (data_len - sig_len); i++) {
         for(size_t j = 0; j < sig_len; j++) {
@@ -257,7 +267,7 @@ size_t search_sigpattern(byte *data, size_t data_len,
 }
 */
 // 4 byte aligned scanner (ARM)
-size_t search_sigpattern4(uint32_t *data, size_t data_len,
+GPWN_BKND size_t search_sigpattern4(uint32_t *data, size_t data_len,
     uint32_t *sigbyte, uint32_t *mask, size_t sig_len) {
     data_len /= 4;
     sig_len /= 4;
@@ -273,7 +283,7 @@ size_t search_sigpattern4(uint32_t *data, size_t data_len,
     return -1;
 }
 // 1 byte hybrid precision scanner
-size_t search_sigpattern_hybrid(byte *data, size_t data_len,
+GPWN_BKND size_t search_sigpattern_hybrid(byte *data, size_t data_len,
     byte *sigbyte, byte *mask, size_t sig_len) {
     for(size_t i = 0; i <= (data_len - sig_len); i++) {
         for(size_t j = 0; j < sig_len; j++) {

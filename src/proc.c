@@ -7,7 +7,16 @@
  https://github.com/bitwaree/gamepwnage
 */
 
+#ifdef GPWN_USING_BUILD_CONFIG
 #include "config.h"
+#else
+#ifndef GPWNAPI
+#define GPWNAPI
+#endif
+#ifndef GPWN_BKND
+#define GPWN_BKND
+#endif
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,8 +25,7 @@
 #include <sys/mman.h>
 #include "proc.h"
 
-__attribute__((visibility(VISIBILITY_FLAG)))
-unsigned int get_proc_map_count(const char *module) {
+GPWNAPI unsigned int get_proc_map_count(const char *module) {
     FILE* fd = fopen("/proc/self/maps", "r");
     if (!fd) {
         //perror("Can't open map...");
@@ -36,8 +44,7 @@ unsigned int get_proc_map_count(const char *module) {
     fclose(fd);
     return idx;
 }
-__attribute__((visibility(VISIBILITY_FLAG)))
-unsigned int get_proc_map(const char *module,
+GPWNAPI unsigned int get_proc_map(const char *module,
     proc_map *map_array, unsigned int max_map_count)  {
     FILE* fd = fopen("/proc/self/maps", "r");
     if (!fd) {
@@ -67,7 +74,7 @@ unsigned int get_proc_map(const char *module,
     fclose(fd);
     return idx;
 }
-__attribute__((visibility(VISIBILITY_FLAG))) void *get_module_addr(
+GPWNAPI void *get_module_addr(
     char *_module, char *_permissions)
 {
     unsigned int map_count = get_proc_map_count(_module);
@@ -98,7 +105,7 @@ __attribute__((visibility(VISIBILITY_FLAG))) void *get_module_addr(
     free(maps);
     return (void*) addr;
 }
-__attribute__((visibility(VISIBILITY_FLAG))) int get_prot(uintptr_t addr)
+GPWNAPI int get_prot(uintptr_t addr)
 {
     unsigned int map_count = get_proc_map_count(0);
     if(!map_count)
@@ -118,8 +125,7 @@ __attribute__((visibility(VISIBILITY_FLAG))) int get_prot(uintptr_t addr)
     free(maps);
     return prot;
 }
-__attribute__((visibility(VISIBILITY_FLAG)))
-void* find_unmapped(void *target, size_t size) {
+GPWNAPI void* find_unmapped(void *target, size_t size) {
     unsigned int map_count = get_proc_map_count(0);
     proc_map *maps = calloc(map_count, sizeof(proc_map));
     if(!maps) {

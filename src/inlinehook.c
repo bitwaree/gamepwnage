@@ -7,6 +7,17 @@
  https://github.com/bitwaree/gamepwnage
 */
 
+#ifdef GPWN_USING_BUILD_CONFIG
+#include "config.h"
+#else
+#ifndef GPWNAPI
+#define GPWNAPI
+#endif
+#ifndef GPWN_BKND
+#define GPWN_BKND
+#endif
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -75,7 +86,7 @@ static inline uint32_t encode_b(int32_t offset) {
 }
 #endif
 
-hook_handle* __attribute__((visibility(VISIBILITY_FLAG))) hook_addr(void *address, void *fake, void **original_func, int flags) {
+GPWNAPI hook_handle* hook_addr(void *address, void *fake, void **original_func, int flags) {
     hook_handle *handle = malloc(sizeof(hook_handle));
     if(!handle) {
         // perror("malloc() failed.");
@@ -290,7 +301,7 @@ hook_handle* __attribute__((visibility(VISIBILITY_FLAG))) hook_addr(void *addres
     return 0;
 }
 
-bool __attribute__((visibility(VISIBILITY_FLAG))) rm_hook(hook_handle *handle) {
+GPWNAPI bool rm_hook(hook_handle *handle) {
     if(!handle) {
         return 0;
     }

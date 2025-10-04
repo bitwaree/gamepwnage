@@ -7,6 +7,17 @@
  https://github.com/bitwaree/gamepwnage
 */
 
+#ifdef GPWN_USING_BUILD_CONFIG
+#include "config.h"
+#else
+#ifndef GPWNAPI
+#define GPWNAPI
+#endif
+#ifndef GPWN_BKND
+#define GPWN_BKND
+#endif
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -18,7 +29,7 @@
 #include "nop.h"
 #include "proc.h"
 
-bool __attribute__((visibility(VISIBILITY_FLAG))) patch_nop(void *Address, size_t len)
+GPWNAPI bool patch_nop(void *Address, size_t len)
 {
 // check architecture and set-up as required
 #if defined(__x86_64__) || defined(__amd64__)
