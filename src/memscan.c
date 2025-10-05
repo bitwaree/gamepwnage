@@ -38,11 +38,14 @@ GPWN_BKND size_t search_sigpattern4(uint32_t *data, size_t data_len,
 GPWN_BKND size_t search_sigpattern_hybrid(byte *data, size_t data_len,
     byte *sigbyte, byte *mask, size_t sig_len);
 
-GPWNAPI sigscan_handle *sigscan_setup(const char *pattern_str,
+GPWNAPI sigscan_handle *sigscan_setup(const char *signature_str,
     const char *libname, int flags) {
     sigscan_handle *handle = malloc(sizeof(sigscan_handle));
     if(!handle) {
-        // allocation failed
+#ifdef GPWN_DEBUG
+        fputs("sigscan_setup() failed : "
+            "malloc() couldn't allocate memory\n", stderr);
+#endif
         return 0;
     }
     handle->flags = flags;
@@ -51,41 +54,55 @@ GPWNAPI sigscan_handle *sigscan_setup(const char *pattern_str,
         handle->libname = strdup(libname);
     else
         handle->libname = 0;
-    handle->memrange.start = 0;
-    handle->memrange.end = 0;
-    handle->sig_size = parse_sigpattern(pattern_str, &handle->sig, &handle->mask);
+    handle->sig_size = parse_sigpattern(signature_str, &handle->sig, &handle->mask);
     if(handle->sig_size == -1) {
-        // invalid sig
-        free(handle->libname);
+#ifdef GPWN_DEBUG
+        fputs("sigscan_setup() failed : "
+            "invalid signature string\n", stderr);
+#endif
+        if(handle->libname)
+            free(handle->libname);
         free(handle);
         return 0;
     }
     return handle;
 }
 GPWNAPI sigscan_handle *sigscan_setup_raw(byte *sigbyte, byte *mask,
-    size_t sig_size, uintptr_t start_addr, uintptr_t end_addr, int flags) {
+    size_t sig_size, const char *libname, int flags) {
     sigscan_handle *handle = malloc(sizeof(sigscan_handle));
     if(!handle) {
-        // allocation failed
+#ifdef GPWN_DEBUG
+        fputs("sigscan_setup_raw() failed : "
+            "malloc() couldn't allocate memory\n", stderr);
+#endif
         return 0;
     }
     handle->flags = flags;
     handle->next = 0;
-    handle->libname = 0;
-    if(end_addr <= start_addr)
-        return 0;
-    handle->memrange.start = (void*) start_addr;
-    handle->memrange.end = (void*) end_addr;
+    if(libname)
+        handle->libname = strdup(libname);
+    else
+        handle->libname = 0;
     handle->sig = malloc(sig_size);
     if(!handle->sig) {
-        // allocation failed
+#ifdef GPWN_DEBUG
+        fputs("sigscan_setup_raw() failed : "
+            "malloc() couldn't allocate memory\n", stderr);
+#endif
+        if(handle->libname)
+            free(handle->libname);
         free(handle);
         return 0;
     }
     handle->mask = malloc(sig_size);
     if(!handle->mask) {
-        // allocation failed
+#ifdef GPWN_DEBUG
+        fputs("sigscan_setup_raw() failed : "
+            "malloc() couldn't allocate memory\n", stderr);
+#endif
         free(handle->sig);
+        if(handle->libname)
+            free(handle->libname);
         free(handle);
         return 0;
     }
@@ -112,44 +129,28 @@ GPWNAPI void *get_sigscan_result(sigscan_handle *handle) {
         prot |= PROT_WRITE;
     if(handle->flags & GPWN_SIGSCAN_XMEM)
         prot |= PROT_EXEC;
-    // if range specified (override)
-    if(handle->memrange.start) {
-        int _prot = get_prot((uintptr_t) handle->memrange.start);
-        if((_prot & PROT_READ))
-            return (void*) -1;
-        if(prot && (_prot & prot) != prot)
-            return (void*) -1;      // protection mismatch
-        size_t offset;
-        if(!handle->next) {
-            // first scan
-            offset = search_sigpattern_hybrid(handle->memrange.start,
-                handle->memrange.end - handle->memrange.start,
-                handle->sig, handle->mask, handle->sig_size);
-        } else if (handle->next >= handle->memrange.start
-            && handle->next <= handle->memrange.end - handle->sig_size
-        ) {
-            // continue if valid
-            offset = search_sigpattern_hybrid(handle->next,
-                handle->memrange.start - handle->memrange.end,
-                handle->sig, handle->mask, handle->sig_size);
-        } else {
-            offset = -1;
-        }
-        if(offset == -1) {
-            handle->next = (void*)-1;
-            return (void*) -1;
-        }
-        handle->next = handle->memrange.start + offset + 1;
-        return handle->memrange.start + offset;
-    }
     unsigned int map_count = get_proc_map_count(handle->libname);
-    if(!map_count)
+    if(!map_count) {
+#ifdef GPWN_DEBUG
+        fputs("get_sigscan_result() failed : "
+            "couldn't retrive map_count.\n", stderr);
+#endif
         return (void*) -1;
+    }
     proc_map *maps = calloc(map_count, sizeof(proc_map));
-    if(!maps)
+    if(!maps) {
+#ifdef GPWN_DEBUG
+        fputs("get_sigscan_result() failed : "
+            "calloc() couldn't allocate memory\n", stderr);
+#endif
         return (void*) -1;
+    }
     map_count = get_proc_map(handle->libname, maps, map_count);
     if(!map_count) {
+#ifdef GPWN_DEBUG
+        fputs("get_sigscan_result() failed : "
+            "couldn't retrive memory map.\n", stderr);
+#endif
         free(maps);
         return (void*) -1;
     }

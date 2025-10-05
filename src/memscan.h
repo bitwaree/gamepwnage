@@ -25,17 +25,12 @@ extern "C" {
 #endif
 
 typedef unsigned char byte;
-struct _memrange {
-    void *start;
-    void *end;
-};
 typedef struct {
     int flags;                // flags
     void *next;               // next address
     size_t sig_size;          // signature length
     byte* sig;                // signature bytes
     byte* mask;               // mask bytes
-    struct _memrange memrange;    // explicit range (overrides other options)
     char *libname;            // library name
 } sigscan_handle;
 
@@ -52,10 +47,11 @@ Note:
 (*) If GPWN_SIGSCAN_FORCEMODE used, it will attempt overriding protection before
     reading.
 */
-GPWNAPI sigscan_handle *sigscan_setup(const char *pattern_str, const char *libname, int flags);
-GPWNAPI sigscan_handle *sigscan_setup_raw(byte *sigbyte, byte *mask, size_t sig_size, uintptr_t start_addr, uintptr_t end_addr, int flags);
+GPWNAPI sigscan_handle *sigscan_setup(const char *signature_str,
+    const char *libname, int flags);
+GPWNAPI sigscan_handle *sigscan_setup_raw(byte *sigbyte, byte *mask,
+    size_t sig_size, const char *libname, int flags);
 GPWNAPI void sigscan_cleanup(sigscan_handle *handle);
-
 GPWNAPI void *get_sigscan_result(sigscan_handle *handle);
 
 #ifdef __cplusplus
