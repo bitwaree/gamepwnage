@@ -33,84 +33,87 @@
 #include "mem.h"
 #include "proc.h"
 
-GPWNAPI bool write_mem(void *Dest, void *Src, size_t len)
+GPWNAPI bool write_mem(void *dest, void *src, size_t len)
 {
    // Get the system page size
     size_t page_size = sysconf(_SC_PAGESIZE);
     
     // Calculate the aligned address and size
-    uintptr_t addr = (uintptr_t)Dest;
+    uintptr_t addr = (uintptr_t)dest;
     uintptr_t aligned_addr = addr & ~(page_size - 1);
-    size_t aligned_size = ((addr + len + page_size - 1) & ~(page_size - 1)) - aligned_addr;
+    size_t aligned_size = ((addr + len + page_size - 1)
+        & ~(page_size - 1)) - aligned_addr;
     // get the current protection
     int old_protection = get_prot(aligned_addr);
     if(old_protection == -1)
     {
-        // fprintf(stderr, "can't retrive memory protection, at address: %p\n", aligned_addr);
+#ifdef GPWN_DEBUG
+        fprintf(stderr, "write_mem() failed at address %p :"
+            " couldn't retrive memory protection.\n", addr);
+#endif
         return false;
     }
-
-    // Change memory protection to allow reading, writing, and executing
-    if (mprotect((void *)aligned_addr, aligned_size, PROT_READ | PROT_WRITE | PROT_EXEC) == -1)
-    {
-        /*
-        perror("WritetoMemory: Error changing memory protection");
-        printf("mprotect error code: %d\n", errno);
-        */
-        return false;
+    // change prot if not writable
+    if(!(old_protection & PROT_WRITE)) {
+        if (mprotect((void *)aligned_addr, aligned_size,
+                old_protection | PROT_WRITE) == -1) {
+#ifdef GPWN_DEBUG
+        fprintf(stderr, "write_mem() failed at address %p :"
+            " could't set memory protection.\n", addr);
+#endif
+            return false;
+        }
     }
-
-    // Perform your memory modification here
-    // ...
-    memcpy(Dest, Src, len);
-
+    memcpy(dest, src, len);
     // Restore the original memory protection
-    if (mprotect((void *)aligned_addr, aligned_size, old_protection) == -1)
-    {
-        /*
-        perror("WritetoMemory: Error restoring memory protection");
-        printf("mprotect error code: %d\n", errno);
-        */
-        return false;
+    if(!(old_protection & PROT_WRITE)) {
+        if (mprotect((void *)aligned_addr, aligned_size, old_protection) == -1) {
+#ifdef GPWN_DEBUG
+        fprintf(stderr, "write_mem() warning at address %p :"
+            " could't restore memory protection.\n", addr);
+#endif
+        }
     }
-
     return true;
 }
-GPWNAPI bool read_mem(void *Dest, void *Src, size_t len)
+GPWNAPI bool read_mem(void *dest, void *src, size_t len)
 {
    // Get the system page size
     size_t page_size = sysconf(_SC_PAGESIZE);
     
     // Calculate the aligned address and size
-    uintptr_t addr = (uintptr_t)Src;
+    uintptr_t addr = (uintptr_t)src;
     uintptr_t aligned_addr = addr & ~(page_size - 1);
     size_t aligned_size = ((addr + len + page_size - 1) & ~(page_size - 1)) - aligned_addr;
     // get the current protection
     int old_protection = get_prot(aligned_addr);
     if(old_protection == -1)
     {
-        // fprintf(stderr, "can't retrive memory protection at address: %p\n", aligned_addr);
+#ifdef GPWN_DEBUG
+        fprintf(stderr, "read_mem() failed at address %p :"
+            " couldn't retrive memory protection.\n", addr);
+#endif
         return false;
     }
-
-    // Change memory protection to allow reading, writing, and executing
-    if (mprotect((void *)aligned_addr, aligned_size, PROT_READ | PROT_WRITE | PROT_EXEC) == -1)
-    {
-        /*
-        perror("ReadfromMemory: Error changing memory protection");
-        printf("mprotect error code: %d\n", errno);
-        */
-        return false;
+    // change prot if not readable
+    if(!(old_protection & PROT_READ)) {
+        if (mprotect((void *)aligned_addr, aligned_size, old_protection | PROT_READ) == -1) {
+#ifdef GPWN_DEBUG
+        fprintf(stderr, "read_mem() failed at address %p :"
+            " could't set memory protection.\n", addr);
+#endif
+            return false;
+        }
     }
-    memcpy(Dest, Src, len);
-    // Restore the original memory protection
-    if (mprotect((void *)aligned_addr, aligned_size, old_protection) == -1)
-    {
-        /*
-        perror("ReadfromMemory: Error restoring memory protection");
-        printf("mprotect error code: %d\n", errno);
-        */
-        return false;
+    memcpy(dest, src, len);
+    // restore the original memory protection
+    if(!(old_protection & PROT_READ)) {
+        if (mprotect((void *)aligned_addr, aligned_size, old_protection) == -1) {
+#ifdef GPWN_DEBUG
+        fprintf(stderr, "read_mem() warning at address %p :"
+            " could't restore memory protection.\n", addr);
+#endif
+        }
     }
     return true;
 }

@@ -24,8 +24,8 @@
 extern "C" {
 #endif
 
-GPWNAPI bool write_mem(void *Dest, void *Src, size_t len);
-GPWNAPI bool read_mem(void *Dest, void *Src, size_t len);
+GPWNAPI bool write_mem(void *dest, void *src, size_t len);
+GPWNAPI bool read_mem(void *dest, void *src, size_t len);
 
 GPWNAPI uintptr_t get_addr(uintptr_t Baseaddr, uintptr_t offsets[], int TotalOffset);
 GPWNAPI void *mmap_near(void *hint, size_t size, int prot);
