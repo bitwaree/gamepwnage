@@ -51,8 +51,7 @@ GPWNAPI uintptr_t arm_hook64(uintptr_t addr, uintptr_t branchaddr, size_t len)
         return false;
     }
     if(!(old_protection & PROT_WRITE)) {
-        // change memory protection to rwx
-        if (mprotect((void *)aligned_addr, aligned_size, PROT_READ | PROT_WRITE | PROT_EXEC) == -1) {
+        if (mprotect((void *)aligned_addr, aligned_size, old_protection | PROT_WRITE) == -1) {
             // protection change failed
             return false;
         }
@@ -69,9 +68,8 @@ GPWNAPI uintptr_t arm_hook64(uintptr_t addr, uintptr_t branchaddr, size_t len)
         }
     }
     if(!(old_protection & PROT_WRITE)) {
-        // restore the original memory protection
         if (mprotect((void *)aligned_addr, aligned_size, old_protection) == -1) {
-            // protection restoration failed
+            // protection change failed
             return false;
         }
     }
@@ -97,8 +95,7 @@ GPWNAPI uintptr_t arm_hook32(uintptr_t addr, uintptr_t branchaddr, size_t len)
         return false;
     }
     if(!(old_protection & PROT_WRITE)) {
-        // change memory protection to rwx
-        if (mprotect((void *)aligned_addr, aligned_size, PROT_READ | PROT_WRITE | PROT_EXEC) == -1) {
+        if (mprotect((void *)aligned_addr, aligned_size, old_protection | PROT_WRITE) == -1) {
             // protection change failed
             return false;
         }
@@ -115,8 +112,7 @@ GPWNAPI uintptr_t arm_hook32(uintptr_t addr, uintptr_t branchaddr, size_t len)
         }
     }
     if(!(old_protection & PROT_WRITE)) {
-        // change memory protection to rwx
-        if (mprotect((void *)aligned_addr, aligned_size, PROT_READ | PROT_WRITE | PROT_EXEC) == -1) {
+        if (mprotect((void *)aligned_addr, aligned_size, old_protection) == -1) {
             // protection change failed
             return false;
         }
