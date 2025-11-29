@@ -53,24 +53,22 @@ GPWNAPI bool write_mem(void *dest, void *src, size_t len)
 #endif
         return false;
     }
-    // change prot if not writable
-    if(!(old_protection & PROT_WRITE)) {
-        if (mprotect((void *)aligned_addr, aligned_size,
-                old_protection | PROT_WRITE) == -1) {
+
+    if (mprotect((void *)aligned_addr, aligned_size,
+            old_protection | PROT_WRITE) == -1) {
 #ifdef GPWN_DEBUG
         fprintf(stderr, "write_mem() failed at address %p :"
             " could't set memory protection.\n", addr);
 #endif
-            return false;
-        }
+        return false;
     }
     memcpy(dest, src, len);
     // Restore the original memory protection
-    if(!(old_protection & PROT_WRITE)) {
+    if((old_protection & PROT_WRITE) != PROT_WRITE) {
         if (mprotect((void *)aligned_addr, aligned_size, old_protection) == -1) {
 #ifdef GPWN_DEBUG
-        fprintf(stderr, "write_mem() warning at address %p :"
-            " could't restore memory protection.\n", addr);
+            fprintf(stderr, "write_mem() warning at address %p :"
+                " could't restore memory protection.\n", addr);
 #endif
         }
     }
@@ -95,23 +93,21 @@ GPWNAPI bool read_mem(void *dest, void *src, size_t len)
 #endif
         return false;
     }
-    // change prot if not readable
-    if(!(old_protection & PROT_READ)) {
-        if (mprotect((void *)aligned_addr, aligned_size, old_protection | PROT_READ) == -1) {
+    if (mprotect((void *)aligned_addr, aligned_size,
+            old_protection | PROT_READ) == -1) {
 #ifdef GPWN_DEBUG
-        fprintf(stderr, "read_mem() failed at address %p :"
-            " could't set memory protection.\n", addr);
+            fprintf(stderr, "read_mem() failed at address %p :"
+                " could't set memory protection.\n", addr);
 #endif
-            return false;
-        }
+        return false;
     }
     memcpy(dest, src, len);
     // restore the original memory protection
-    if(!(old_protection & PROT_READ)) {
+    if((old_protection & PROT_READ) != PROT_READ) {
         if (mprotect((void *)aligned_addr, aligned_size, old_protection) == -1) {
 #ifdef GPWN_DEBUG
-        fprintf(stderr, "read_mem() warning at address %p :"
-            " could't restore memory protection.\n", addr);
+            fprintf(stderr, "read_mem() warning at address %p :"
+                " could't restore memory protection.\n", addr);
 #endif
         }
     }
