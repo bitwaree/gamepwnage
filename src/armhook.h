@@ -24,11 +24,11 @@ extern "C" {
 #endif
 
 #if defined(__aarch64__)
-// For 64 bit armhook: requires 28 bytes minimum
-GPWNAPI uintptr_t arm_hook64(uintptr_t addr, uintptr_t branchaddr, size_t len);
+// For 64 bit armhook: requires 20 bytes minimum
+GPWNAPI uintptr_t arm64_detour(uintptr_t addr, uintptr_t branchaddr, size_t len);
 #elif defined(__arm__)
-//For 32 bit armhook: requires 20 bytes minimum
-GPWNAPI uintptr_t arm_hook32(uintptr_t addr, uintptr_t branchaddr, size_t len);
+//For 32 bit armhook: requires 12 bytes minimum
+GPWNAPI uintptr_t arm32_detour(uintptr_t addr, uintptr_t branchaddr, size_t len);
 #endif
 
 #ifdef __cplusplus
