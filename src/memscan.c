@@ -288,8 +288,8 @@ GPWN_BKND size_t search_sigpattern_hybrid(byte *data, size_t data_len,
     byte *sigbyte, byte *mask, size_t sig_len) {
     for(size_t i = 0; i <= (data_len - sig_len); i++) {
         for(size_t j = 0; j < sig_len; j++) {
-            if((sig_len - j) >= 8) {
 #ifdef __LP64__
+            if((sig_len - j) >= 8) {
                 // 8 byte alignment
                 if(
                     (*(uint64_t*)((size_t)data + i + j) & *((uint64_t*)((size_t)mask + j)))
