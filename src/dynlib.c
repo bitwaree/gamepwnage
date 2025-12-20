@@ -7,15 +7,37 @@
  https://github.com/bitwaree/gamepwnage
 */
 
+
+#ifdef GPWN_USING_BUILD_CONFIG
+#include "config.h"
+#else
+#ifndef GPWNAPI
+#define GPWNAPI
+#endif
+#ifndef GPWN_BKND
+#define GPWN_BKND
+#endif
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
+
+#if defined(__linux__) && defined(__GLIBC__)
+#ifndef __USE_GNU
+#define __USE_GNU
+#endif
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#endif
 #include <link.h>
 #include <dlfcn.h>
 #include <elf.h>
 
 // SysV hash algorithm
-static uint32_t sysv_hash(const uint8_t *name) {
+GPWN_BKND static uint32_t sysv_hash(const uint8_t *name) {
     uint32_t h = 0, g;
     while (*name) {
         h = (h << 4) + *name++;
@@ -27,7 +49,7 @@ static uint32_t sysv_hash(const uint8_t *name) {
 }
 
 // GNU hash algorithm
-static uint32_t gnu_hash(const uint8_t *name) {
+GPWN_BKND static uint32_t gnu_hash(const uint8_t *name) {
     uint32_t h = 5381;
     while (*name) {
         h += (h << 5) + *name++;
@@ -36,7 +58,7 @@ static uint32_t gnu_hash(const uint8_t *name) {
 }
 
 // Find symbol using SysV hash table
-static ElfW(Sym) *find_sym_sysv(
+GPWN_BKND static ElfW(Sym) *find_sym_sysv(
         ElfW(Sym) *symtab, const char *strtab,
         const uint32_t *buckets, uint32_t buckets_cnt,
         const uint32_t *chains, uint32_t chains_cnt,
@@ -53,7 +75,7 @@ static ElfW(Sym) *find_sym_sysv(
 }
 
 // Find symbol using GNU hash table
-static ElfW(Sym) *find_sym_gnu(
+GPWN_BKND static ElfW(Sym) *find_sym_gnu(
         ElfW(Sym) *symtab, const char *strtab,
         const uint32_t *buckets, uint32_t buckets_cnt,
         const uint32_t *chains, uint32_t symoffset,
@@ -98,7 +120,7 @@ struct find_lib_data {
 };
 
 // Callback for dl_iterate_phdr
-static int iterate_cb(struct dl_phdr_info *info, size_t size, void *arg) {
+GPWN_BKND static int iterate_cb(struct dl_phdr_info *info, size_t size, void *arg) {
     struct find_lib_data *d = (struct find_lib_data *)arg;
     (void)size;
 
@@ -136,7 +158,7 @@ static int iterate_cb(struct dl_phdr_info *info, size_t size, void *arg) {
 }
 
 // Main function: resolve symbol from library
-void *gpwn_dlsym(const char *libname, const char *symname) {
+GPWNAPI void *gpwn_dlsym(const char *libname, const char *symname) {
     if (!libname || !*libname || !symname || !*symname) {
         // fputs("gpwn_dlsym: invalid arguments\n", stderr);
         return NULL;
