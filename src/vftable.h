@@ -21,7 +21,8 @@
 extern "C" {
 #endif
 
-GPWNAPI void *get_vftable_ptr(const char *libname, const char *classname);
+GPWNAPI void **get_vftable_ptr(const char *libname, const char *classname);
+GPWNAPI void *hook_vft(void **vftable, size_t idx, void *newfunc);
 
 #ifdef __cplusplus
 }

@@ -23,9 +23,10 @@
 
 #include "vftable.h"
 #include "dynlib.h"
+#include "mem.h"
 
 
-GPWNAPI void *get_vftable_ptr(const char *libname, const char *classname) {
+GPWNAPI void **get_vftable_ptr(const char *libname, const char *classname) {
     char sym[4096];
     size_t class_len = strnlen(classname, 4096);
     if(
@@ -37,4 +38,13 @@ GPWNAPI void *get_vftable_ptr(const char *libname, const char *classname) {
     sprintf(sym, "_ZTV%zu%s", class_len, classname);
     void *vtable_addr = gpwn_dlsym(libname, (const char*) sym);
     return (vtable_addr) ? vtable_addr + 2*sizeof(void*) : 0;
+}
+
+GPWNAPI void *hook_vft(void **vftable, size_t idx, void *newfunc) {
+    void *old_func = vftable[idx];
+
+    if(!write_mem((void*) &vftable[idx],
+        (void*) &newfunc, sizeof(void*))
+    ) return 0;
+    return old_func;
 }
