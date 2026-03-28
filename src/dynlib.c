@@ -199,13 +199,25 @@ GPWNAPI void *gpwn_dlsym(const char *libname, const char *symname) {
     for (ElfW(Dyn) *dyn = dynamic; dyn->d_tag != DT_NULL; dyn++) {
         switch (dyn->d_tag) {
             case DT_SYMTAB:
+#ifdef __ANDROID__
                 symtab = (ElfW(Sym) *)(load_bias + dyn->d_un.d_ptr);
+#else
+                symtab = (ElfW(Sym) *)(dyn->d_un.d_ptr);
+#endif
                 break;
             case DT_STRTAB:
+#ifdef __ANDROID__
                 strtab = (const char *)(load_bias + dyn->d_un.d_ptr);
+#else
+                strtab = (const char *)(dyn->d_un.d_ptr);
+#endif
                 break;
             case DT_HASH: {
+#ifdef __ANDROID__
                 const uint32_t *hash_ptr = (const uint32_t *)(load_bias + dyn->d_un.d_ptr);
+#else
+                const uint32_t *hash_ptr = (const uint32_t *)(dyn->d_un.d_ptr);
+#endif
                 sysv_buckets_cnt = hash_ptr[0];
                 sysv_chains_cnt = hash_ptr[1];
                 sysv_buckets = &hash_ptr[2];
@@ -213,7 +225,11 @@ GPWNAPI void *gpwn_dlsym(const char *libname, const char *symname) {
                 break;
             }
             case DT_GNU_HASH: {
+#ifdef __ANDROID__
                 const uint32_t *gnu_hash_ptr = (const uint32_t *)(load_bias + dyn->d_un.d_ptr);
+#else
+                const uint32_t *gnu_hash_ptr = (const uint32_t *)(dyn->d_un.d_ptr);
+#endif
                 gnu_buckets_cnt = gnu_hash_ptr[0];
                 gnu_symoffset = gnu_hash_ptr[1];
                 gnu_bloom_cnt = gnu_hash_ptr[2];
