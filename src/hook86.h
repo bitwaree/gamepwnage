@@ -31,17 +31,6 @@ RETURNS     -- the address where the hook should jmp back
 */
 GPWNAPI uintptr_t hook_x86(void *AddresstoHook, void *hookFunAddr, size_t len);
 
-/*
-x86_64 hook -- atleast 16 bytes required to place a hook
-            -- "%rax" will be modified,
-               needs to be poped in the first of the code
-            -- "%rsp" will be modified as well
-
-RETURNS     -- the address where the hook should jmp back
-*/
-#if defined(__x86_64__) || defined(__amd64__)
-GPWNAPI uintptr_t hook_x64(void *AddresstoHook, void *hookFunAddr, size_t len);
-#endif
 
 #ifdef __cplusplus
 }

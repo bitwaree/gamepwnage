@@ -27,6 +27,7 @@ typedef struct {
     void *address;          // where to place hook
     void *fake;             // the fake function
     void *trampoline_addr;  // allocated address to place the copied bytes
+    size_t rbyte_len;       // replaced byte length
     int flags;              // flags
 } hook_handle;
 
@@ -37,6 +38,11 @@ typedef struct {
 #elif defined(__arm__)
 #define GPWN_ARM_LEGACYHOOK     0x1 /* 3 instructions, 12 bytes */
 #define GPWN_ARM_NANOHOOK       0x2 /* 1 instructions, 4 bytes  */
+#elif defined(__x86_64__) || defined(__amd64__)
+#define GPWN_X86_SHORTHOOK      0x1 /* 5 bytes minimum */
+#define GPWN_X86_64_LONGHOOK    0x2 /* 6 bytes minimum */
+#elif defined(__i386__) || defined(__x86__)
+#define GPWN_X86_SHORTHOOK      0x1 /* 5 bytes minimum */
 #endif
 
 GPWNAPI hook_handle* hook_addr(void *address, void *fake, void **original_func, int flags);
