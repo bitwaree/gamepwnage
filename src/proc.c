@@ -61,7 +61,7 @@ GPWNAPI unsigned int get_proc_map(const char *module,
                 continue;
         }
         // <start_addr>-<end_addr> rwxp ....
-        sscanf(line, "%lx-%lx %4s", &map_array[idx].start, &map_array[idx].end, prot_str);
+        sscanf(line, "%zx-%zx %4s", &map_array[idx].start, &map_array[idx].end, prot_str);
         map_array[idx].prot = 0;
         if (prot_str[0] == 'r')
             map_array[idx].prot |= PROT_READ;
