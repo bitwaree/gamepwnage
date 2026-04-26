@@ -36,7 +36,7 @@ GPWN_BKND size_t search_sigpattern(byte *data, size_t data_len,
 GPWN_BKND size_t search_sigpattern4(uint32_t *data, size_t data_len,
     uint32_t *sigbyte, uint32_t *mask, size_t sig_len);
 GPWN_BKND size_t search_sigpattern_hybrid(byte *data, size_t data_len,
-    byte *sigbyte, byte *mask, size_t sig_len);
+    byte *sigbyte, byte *mask, size_t sig_len, size_t block_size);
 
 GPWNAPI sigscan_handle *sigscan_setup(const char *signature_str,
     const char *libname, int flags) {
@@ -125,10 +125,16 @@ GPWNAPI void *get_sigscan_result(sigscan_handle *handle) {
         return (void*)-1;          // all possible addresses has been scanned
     // parse protection flags
     int prot = 0;
+    int block_size = 1;
     if(handle->flags & GPWN_SIGSCAN_WMEM)
         prot |= PROT_WRITE;
     if(handle->flags & GPWN_SIGSCAN_XMEM)
+    {
         prot |= PROT_EXEC;
+#if defined(__aarch64__) || defined(__arm__)
+        block_size = 4;
+#endif
+    }
     unsigned int map_count = get_proc_map_count(handle->libname);
     if(!map_count) {
 #ifdef GPWN_DEBUG
@@ -185,7 +191,7 @@ GPWNAPI void *get_sigscan_result(sigscan_handle *handle) {
                     continue;
             }
             offset = search_sigpattern_hybrid(data, data_len,
-                handle->sig, handle->mask, handle->sig_size);
+                handle->sig, handle->mask, handle->sig_size, block_size);
             if(offset != -1) {
                 handle->next = data + offset + 1;
                 free(maps);
@@ -209,6 +215,7 @@ static inline uint8_t hextonib(char hex) {
         return hex - 'A' + 0xa;
     return 0;
 }
+// __attribute__((optimize("O2")))
 GPWN_BKND size_t parse_sigpattern(const char *in_pattern,
     byte **sigbyte, byte **mask) {
     *sigbyte = malloc((strlen(in_pattern)/2)+1);
@@ -236,7 +243,7 @@ GPWN_BKND size_t parse_sigpattern(const char *in_pattern,
             (*sigbyte)[head] |= 0;
             (*mask)[head] |= 0;
         }
-        else if (in_pattern[i] == ' ') {
+        else if (in_pattern[i] == ' ' || in_pattern[i] == '\n') {
             continue;
         }
         else {
@@ -268,6 +275,7 @@ GPWN_BKND size_t search_sigpattern(byte *data, size_t data_len,
 }
 */
 // 4 byte aligned scanner (ARM)
+// __attribute__((optimize("O2")))
 GPWN_BKND size_t search_sigpattern4(uint32_t *data, size_t data_len,
     uint32_t *sigbyte, uint32_t *mask, size_t sig_len) {
     data_len /= 4;
@@ -283,35 +291,105 @@ GPWN_BKND size_t search_sigpattern4(uint32_t *data, size_t data_len,
     }
     return -1;
 }
+
+#if defined(USING_AVX2)
+#include <immintrin.h>
+static inline char cmp256(__m256i *data, __m256i *sig, __m256i *mask) {
+    __m256i diff = _mm256_xor_si256(
+        _mm256_and_si256(_mm256_loadu_si256(data), _mm256_loadu_si256(mask)),
+        _mm256_loadu_si256(sig)
+    );
+    return _mm256_testz_si256(diff, diff);
+}
+static inline char cmp128(__m128i *data, __m128i *sig, __m128i *mask) {
+    __m128i diff = _mm_xor_si128(
+        _mm_and_si128(_mm_loadu_si128(data), _mm_loadu_si128(mask)),
+        _mm_loadu_si128(sig)
+    );
+    return _mm_testz_si128(diff, diff);
+}
+#elif defined(USING_NEON)
+#include <arm_neon.h>
+static inline char cmp128(uint64x2_t *data, uint64x2_t *sig, uint64x2_t *mask) {
+    uint64x2_t diff = veorq_u64(
+        vandq_u64(vld1q_u64(data), vld1q_u64(mask)),
+        vld1q_u64(sig)
+    );
+    return (vgetq_lane_u64(diff, 0) | vgetq_lane_u64(diff, 1)) == 0;
+}
+#endif
+
 // 1 byte hybrid precision scanner
+// __attribute__((optimize("O2")))
 GPWN_BKND size_t search_sigpattern_hybrid(byte *data, size_t data_len,
-    byte *sigbyte, byte *mask, size_t sig_len) {
-    for(size_t i = 0; i <= (data_len - sig_len); i++) {
-        for(size_t j = 0; j < sig_len; j++) {
+    byte *sigbyte, byte *mask, size_t sig_len, size_t block_size) {
+    if(block_size == 0)
+        return -1;
+    for(size_t i = 0; i <= (data_len - sig_len); i+=block_size) {
+        for(size_t j = 0; j < sig_len;) {
+#if defined(USING_AVX2)
+            if((sig_len - j) >= 32) {
+                // 8 byte alignment
+                if(
+                    !cmp256(
+                        (__m256i*) (data + i + j),
+                        (__m256i*) (sigbyte + j),
+                        (__m256i*) (mask + j)
+                    )
+                )
+                    break;
+                j+=32;
+            } else if((sig_len - j) >= 16) {
+                // 8 byte alignment
+                if(
+                    !cmp128(
+                        (__m128i*) (data + i + j),
+                        (__m128i*) (sigbyte + j),
+                        (__m128i*) (mask + j)
+                    )
+                )
+                    break;
+                j+=16;
+            } else
+#elif defined(USING_NEON)
+            if((sig_len - j) >= 16) {
+                // 8 byte alignment
+                if(
+                    !cmp128(
+                        (uint64x2_t*) (data + i + j),
+                        (uint64x2_t*) (sigbyte + j),
+                        (uint64x2_t*) (mask + j)
+                    )
+                )
+                    break;
+                j+=16;
+            } else
+#endif
 #ifdef __LP64__
             if((sig_len - j) >= 8) {
                 // 8 byte alignment
                 if(
                     (*(uint64_t*)((size_t)data + i + j) & *((uint64_t*)((size_t)mask + j)))
-                    != (*(uint64_t*)((size_t)sigbyte + j) & *((uint64_t*)((size_t)mask + j)))
+                    != *(uint64_t*)((size_t)sigbyte + j)
                 )
                     break;
-                j+=7;
+                j+=8;
             } else
 #endif
             if((sig_len - j) >= 4) {
                 // 4 byte alignment
                 if(
                     (*(uint32_t*)((size_t)data + i + j) & *((uint32_t*)((size_t)mask + j)))
-                    != (*(uint32_t*)((size_t)sigbyte + j) & *((int32_t*)((size_t)mask + j)))
+                    != *(uint32_t*)((size_t)sigbyte + j)
                 )
                     break;
-                j+=3;
+                j+=4;
             } else {
-                if((data[i+j] & mask[j]) != (sigbyte[j] & mask[j]))
+                if((data[i+j] & mask[j]) != sigbyte[j])
                     break;
+                j+=1;
             }
-            if(j+1 == sig_len) {
+            if(j == sig_len) {
                 return i;
             }
         }
