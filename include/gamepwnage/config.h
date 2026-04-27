@@ -19,9 +19,9 @@
     #ifndef EXPORT_SYM
         #define EXPORT_SYM
     #endif
-    #define GPWN_BKND __attribute__((visibility("default")))
+    #define GPWN_BKND
 #else
-    #define GPWN_BKND __attribute__((visibility("hidden")))
+    #define GPWN_BKND static
 #endif
 
 #ifdef EXPORT_SYM
