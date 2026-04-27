@@ -37,7 +37,7 @@
 #include <elf.h>
 
 // SysV hash algorithm
-GPWN_BKND static uint32_t sysv_hash(const uint8_t *name) {
+GPWN_BKND uint32_t sysv_hash(const uint8_t *name) {
     uint32_t h = 0, g;
     while (*name) {
         h = (h << 4) + *name++;
@@ -49,7 +49,7 @@ GPWN_BKND static uint32_t sysv_hash(const uint8_t *name) {
 }
 
 // GNU hash algorithm
-GPWN_BKND static uint32_t gnu_hash(const uint8_t *name) {
+GPWN_BKND uint32_t gnu_hash(const uint8_t *name) {
     uint32_t h = 5381;
     while (*name) {
         h += (h << 5) + *name++;
@@ -58,7 +58,7 @@ GPWN_BKND static uint32_t gnu_hash(const uint8_t *name) {
 }
 
 // Find symbol using SysV hash table
-GPWN_BKND static ElfW(Sym) *find_sym_sysv(
+GPWN_BKND ElfW(Sym) *find_sym_sysv(
         ElfW(Sym) *symtab, const char *strtab,
         const uint32_t *buckets, uint32_t buckets_cnt,
         const uint32_t *chains, uint32_t chains_cnt,
@@ -75,7 +75,7 @@ GPWN_BKND static ElfW(Sym) *find_sym_sysv(
 }
 
 // Find symbol using GNU hash table
-GPWN_BKND static ElfW(Sym) *find_sym_gnu(
+GPWN_BKND ElfW(Sym) *find_sym_gnu(
         ElfW(Sym) *symtab, const char *strtab,
         const uint32_t *buckets, uint32_t buckets_cnt,
         const uint32_t *chains, uint32_t symoffset,
@@ -120,7 +120,7 @@ struct find_lib_data {
 };
 
 // Callback for dl_iterate_phdr
-GPWN_BKND static int iterate_cb(struct dl_phdr_info *info, size_t size, void *arg) {
+GPWN_BKND int iterate_cb(struct dl_phdr_info *info, size_t size, void *arg) {
     struct find_lib_data *d = (struct find_lib_data *)arg;
     (void)size;
 
